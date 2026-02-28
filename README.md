@@ -2,7 +2,21 @@
 
 **Live Demo:** [https://splendorous-custard-b920dc.netlify.app/](https://splendorous-custard-b920dc.netlify.app/)
 
-RushLess is a premium, real-time crowd management web application designed for campus facilities (like the Mess, Sports Complex, and Library). It replaces traditional ID card scanning or manual logbooks with secure Google Authentication, dynamic Apple Watch-style QR codes, and a blazing-fast Firebase backend.
+### 📊 Advanced Crowd Analytics
+- **🌟 Lowest Crowded Indicator:** The app instantly compares all peers in a category (e.g., all 8 Badminton Courts or 3 Mess Floors) and flags the best destination with a glowing green badge.
+- **📈 Live Population Trends:** Visual indicators (red `↑` or green `↓` arrows) appear next to headcounts the moment a scan occurs, showing the immediate traffic momentum of a facility.
+- **⏳ Predictive Estimated Wait Time (EWT):** Specifically for the Mess, the app provides a real-time wait estimate. Unlike static systems, this is a **Closed-Loop Feedback System**:
+  - **Empirical Data:** Every time a user checks out, the scanner calculates their exact stay duration.
+  - **Rolling Average:** This data is pushed to Firebase to maintain a rolling empirical average of visit lengths.
+  - **Live Prediction:** The dashboard combines this "real-world stay duration" with the current headcount to predict how long you'll wait in line.
+
+#### 🧮 The Prediction Mathematics
+The EWT is calculated using a two-stage stochastic heuristic:
+1. **Exponential Moving Average (EMA):** To keep the "Average Stay" responsive to live conditions (like peak-hour speed eating), we update the duration index on every checkout:
+   `NewAvg = (CurrentAvg * 0.7) + (RecentStayDuration * 0.3)`
+2. **Heuristic Wait Formula:** We then estimate the queue length based on a "Batch-Processing" model:
+   `WaitTime ≈ (CurrentPeopleInside / 15) * (AverageStay / 3)`
+   *Where `15` is the estimated batch size getting roti at once, and `1/3` is the assumed period of the stay spent in the mess line.*
 
 ---
 
@@ -30,10 +44,21 @@ RushLess is a premium, real-time crowd management web application designed for c
 - **Operator Protection:** Scanner mode is completely hidden from logged-in students and protected by a realtime Firebase-synced secret password.
 
 
-### 📊 Real-Time Dynamic Dashboard
-- **Live Headcounts:** See exactly how many people are inside any location before you go.
-- **Deep Nesting:** Supports infinite facility nesting (e.g., separating Badminton into 8 distinct courts, Table Tennis into 4 courts, Squash into 2 courts, etc.).
-- **Active Passes:** Smart dashboard tracking instantly surfaces your active check-ins so you never forget your court number or desk.
+### 📊 Advanced Crowd Analytics
+- **🌟 Lowest Crowded Indicator:** The app instantly compares all peers in a category (e.g., all 8 Badminton Courts or 3 Mess Floors) and flags the best destination with a glowing green badge.
+- **📈 Live Population Trends:** Visual indicators (red `↑` or green `↓` arrows) appear next to headcounts the moment a scan occurs, showing the immediate traffic momentum of a facility.
+- **⏳ Predictive Estimated Wait Time (EWT):** Specifically for the Mess, the app provides a real-time wait estimate. Unlike static systems, this is a **Closed-Loop Feedback System**:
+  - **Empirical Data:** Every time a user checks out, the scanner calculates their exact stay duration.
+  - **Rolling Average:** This data is pushed to Firebase to maintain a rolling empirical average of visit lengths.
+  - **Live Prediction:** The dashboard combines this "real-world stay duration" with the current headcount to predict how long you'll wait in line.
+
+#### 🧮 The Prediction Mathematics
+The EWT is calculated using a two-stage stochastic heuristic:
+1. **Exponential Moving Average (EMA):** To keep the "Average Stay" responsive to live conditions (like peak-hour speed eating), we update the duration index on every checkout:
+   `NewAvg = (CurrentAvg * 0.7) + (RecentStayDuration * 0.3)`
+2. **Heuristic Wait Formula:** We then estimate the queue length based on a "Batch-Processing" model:
+   `WaitTime ≈ (CurrentPeopleInside / 15) * (AverageStay / 3)`
+   *Where `15` is the estimated batch size getting roti at once, and `1/3` is the assumed period of the stay spent in the mess line.*
 
 ### Micro-interactions
 - **Dynamic Fun Facts:** Checking out calculates and displays a personalized fun fact on the success overlay, such as:
