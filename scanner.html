@@ -235,16 +235,24 @@
             const countRef = db.ref(`counts/${location}`);
 
             userStatusRef.once('value').then((snapshot) => {
-                const isInside = snapshot.val();
+                const val = snapshot.val();
+                const isInside = val !== null && val !== false;
 
                 if (isInside) {
                     userStatusRef.remove();
                     countRef.set(firebase.database.ServerValue.increment(-1));
-                    updateStatus(`👋 Checked OUT: ${rollNumber}`, "warning");
+
+                    let durationFact = "";
+                    if (typeof val === 'number') {
+                        const mins = Math.max(1, Math.floor((Date.now() - val) / 60000));
+                        durationFact = ` (${mins} min session!)`;
+                    }
+
+                    updateStatus(`👋 Checked OUT: ${rollNumber}${durationFact}`, "warning");
                     totalOut++;
                     document.getElementById('scanOutCount').innerText = totalOut;
                 } else {
-                    userStatusRef.set(true);
+                    userStatusRef.set(Date.now());
                     countRef.set(firebase.database.ServerValue.increment(1));
                     updateStatus(`✅ Checked IN: ${rollNumber}`, "success");
                     totalIn++;

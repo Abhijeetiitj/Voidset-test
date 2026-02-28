@@ -14,7 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
@@ -592,7 +592,7 @@
 
             <div class="divider"><span>or</span></div>
 
-            <button class="btn-admin" onclick="window.location.href='scanner.html'">📸 Open Scanner Mode</button>
+            <button class="btn-admin" onclick="verifyAdminScanner()">📸 Open Scanner Mode</button>
         </div>
     </div>
 
@@ -606,10 +606,19 @@
             <h1 class="logo-text" style="font-size:42px;">RushLess</h1>
             <p id="nav-subtitle" class="tagline" style="margin-bottom:10px;">Select Facility</p>
             <div id="user-greeting"
-                style="margin-bottom:30px; padding:8px 16px; background:rgba(255,255,255,0.05); border-radius:30px; display:inline-flex; align-items:center; gap:10px; border:1px solid rgba(255,255,255,0.1); backdrop-filter:blur(5px);">
+                style="margin-bottom:20px; padding:8px 16px; background:rgba(255,255,255,0.05); border-radius:30px; display:inline-flex; align-items:center; gap:10px; border:1px solid rgba(255,255,255,0.1); backdrop-filter:blur(5px);">
                 <img id="user-avatar" src="" alt="Avatar"
                     style="width:24px; height:24px; border-radius:50%; display:none;">
                 <span id="user-name" style="font-size:14px; color:rgba(255,255,255,0.8); font-weight:500;"></span>
+            </div>
+
+            <!-- Active Passes Section (Injected dynamically) -->
+            <div id="active-passes-wrapper"
+                style="display:none; margin-bottom: 30px; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;">
+                <h3
+                    style="font-size: 14px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; font-weight: 600;">
+                    🎟️ Active Passes</h3>
+                <div id="active-passes-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
             </div>
         </div>
 
@@ -617,10 +626,6 @@
 
         <button class="change-roll" onclick="signOutUser()">↻ Sign Out</button>
 
-        <div id="nav-admin-link" class="admin-link-container" style="display: none;">
-            <button class="btn-admin" style="max-width:300px; margin:0 auto;"
-                onclick="window.location.href='scanner.html'">📸 Open Scanner Mode</button>
-        </div>
     </div>
 
     <!-- ===== QR SCREEN ===== -->
@@ -639,8 +644,15 @@
             </div>
         </div>
 
-        <div id="qrcode" class="qr-box"></div>
-        <p class="note">🔒 QR valid for this session only</p>
+        <div class="qr-apple-style">
+            <div class="qr-ring qr-ring-1"></div>
+            <div class="qr-ring qr-ring-2"></div>
+            <div class="qr-ring qr-ring-3"></div>
+            <div id="qrcode" class="qr-box"
+                style="position:relative; z-index:10; background:none; box-shadow:none; border:none; padding:15px;">
+            </div>
+        </div>
+        <p class="note" style="margin-top:20px;">🔒 QR valid for this session only</p>
 
         <div style="text-align: center; margin-top: 20px;">
             <button class="btn-done" onclick="goToHome()">✓ Done / Back to Home</button>
@@ -665,6 +677,10 @@
             <div class="success-icon-ring orange-ring">👋</div>
             <div class="success-title">Checked Out!</div>
             <div class="success-subtitle">See you next time</div>
+            <div id="funfact-checkout"
+                style="margin-top: 20px; font-size: 15px; background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); font-weight: 500; opacity: 0; transform: translateY(10px); transition: all 0.5s ease 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                <!-- Fun fact injected here -->
+            </div>
         </div>
     </div>
 
@@ -870,6 +886,25 @@
             });
         }
 
+        function verifyAdminScanner() {
+            const phrase = window.prompt("Enter Operator Secret Phrase:");
+            if (!phrase) return; // User cancelled
+
+            db.ref('admin_secret').once('value').then((snapshot) => {
+                const secret = snapshot.val();
+
+                // Convert secret to string before comparing, because Firebase 
+                // parses "1234" as a Number, but window.prompt returns a String.
+                if (secret !== null && secret.toString() === phrase) {
+                    window.location.href = 'scanner.html';
+                } else {
+                    alert("❌ Incorrect Secret Phrase!");
+                }
+            }).catch((e) => {
+                alert("Error connecting to server. Please try again.");
+            });
+        }
+
         function showScreen(screenId) {
             // Hide ALL screens first with inline display:none
             document.querySelectorAll('.screen').forEach(s => {
@@ -894,12 +929,14 @@
                 document.getElementById('nav-topbar').style.display = 'none';
                 document.getElementById('nav-header').style.display = 'block';
                 document.getElementById('nav-subtitle').innerText = "Select Facility";
-                document.getElementById('nav-admin-link').style.display = 'block';
+                const roll = localStorage.getItem('rushless_roll');
+                if (roll) checkActivePasses(roll);
             } else {
                 document.getElementById('nav-topbar').style.display = 'flex';
                 document.getElementById('nav-header').style.display = 'none';
                 document.getElementById('nav-title').innerText = title;
-                document.getElementById('nav-admin-link').style.display = 'none';
+                document.getElementById('active-passes-wrapper').style.display = 'none';
+                if (window.activePassesListenerRef) db.ref(window.activePassesListenerRef).off();
             }
 
             let delay = 0;
@@ -933,6 +970,64 @@
                 }
                 delay += 0.08;
             }
+        }
+
+        // ===== ACTIVE PASSES =====
+        const facilityNameMapping = {
+            "Mess_Floor_0": "Mess Floor 0", "Mess_Floor_1": "Mess Floor 1", "Mess_Floor_2": "Mess Floor 2",
+            "Sports_Gym": "Gym", "Sports_Kabbadi": "Kabbadi", "Library_Central": "Central Library",
+            "Sports_Badminton_1": "Badminton 1", "Sports_Badminton_2": "Badminton 2", "Sports_Badminton_3": "Badminton 3",
+            "Sports_Badminton_4": "Badminton 4", "Sports_Badminton_5": "Badminton 5", "Sports_Badminton_6": "Badminton 6",
+            "Sports_Badminton_7": "Badminton 7", "Sports_Badminton_8": "Badminton 8",
+            "Sports_TT_1": "Table Tennis 1", "Sports_TT_2": "Table Tennis 2", "Sports_TT_3": "Table Tennis 3", "Sports_TT_4": "Table Tennis 4",
+            "Sports_Squash_1": "Squash 1", "Sports_Squash_2": "Squash 2"
+        };
+
+        function checkActivePasses(roll) {
+            const wrapper = document.getElementById('active-passes-wrapper');
+            const container = document.getElementById('active-passes-container');
+
+            if (window.activePassesListenerRef) db.ref(window.activePassesListenerRef).off();
+            window.activePassesListenerRef = 'active_users';
+
+            db.ref(window.activePassesListenerRef).on('value', (snapshot) => {
+                const data = snapshot.val();
+                let activePassesHtml = '';
+
+                if (data) {
+                    for (const [facilityKey, users] of Object.entries(data)) {
+                        const val = users[roll];
+                        if (val !== undefined && val !== null && val !== false) {
+                            const name = facilityNameMapping[facilityKey] || facilityKey;
+                            let timeStr = "";
+                            if (typeof val === 'number') {
+                                const dt = new Date(val);
+                                timeStr = `Since ${dt.getHours().toString().padStart(2, '0')}:${dt.getMinutes().toString().padStart(2, '0')}`;
+                            }
+
+                            activePassesHtml += `
+                                <div onclick="generateQR('${name}', '${facilityKey}')" style="background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1)); border: 1px solid rgba(102,126,234,0.3); border-radius: 16px; padding: 15px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;">
+                                    <div>
+                                        <div style="font-size: 16px; font-weight: 600; color: white; margin-bottom: 4px;">${name}</div>
+                                        <div style="font-size: 13px; color: rgba(255,255,255,0.6);">${timeStr}</div>
+                                    </div>
+                                    <div style="background: rgba(102,126,234,0.2); color: #879af1; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600;">
+                                        Show QR
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+
+                if (activePassesHtml) {
+                    container.innerHTML = activePassesHtml;
+                    wrapper.style.display = 'block';
+                } else {
+                    wrapper.style.display = 'none';
+                    container.innerHTML = '';
+                }
+            });
         }
 
         function diveDeeper(key) {
@@ -982,18 +1077,71 @@
             let wasInside = false;
 
             db.ref(window.userStatusListenerRef).on('value', (snapshot) => {
-                const isInside = snapshot.val() === true;
-                if (initialLoad) { initialLoad = false; wasInside = isInside; return; }
-                if (!wasInside && isInside) triggerOverlay('checkInOverlay', 'confetti-in');
-                else if (wasInside && !isInside) triggerOverlay('checkOutOverlay', 'confetti-out');
+                const val = snapshot.val();
+                const isInside = (val !== null && val !== false);
+
+                if (initialLoad) {
+                    initialLoad = false;
+                    wasInside = isInside;
+                    if (isInside && typeof val === 'number') {
+                        window.currentCheckInTime = val;
+                    }
+                    return;
+                }
+
+                if (!wasInside && isInside) {
+                    if (typeof val === 'number') window.currentCheckInTime = val;
+                    triggerOverlay('checkInOverlay', 'confetti-in');
+                } else if (wasInside && !isInside) {
+                    let factText = "";
+                    if (window.currentCheckInTime) {
+                        const mins = Math.max(1, Math.floor((Date.now() - window.currentCheckInTime) / 60000));
+                        factText = `💡 Fun Fact: You just spent ${mins} minute${mins > 1 ? 's' : ''} here!`;
+                        window.currentCheckInTime = null;
+                    } else {
+                        factText = `💡 Fun Fact: You completed a great session!`;
+                    }
+
+                    const ffEl = document.getElementById('funfact-checkout');
+                    ffEl.innerText = factText;
+                    ffEl.style.opacity = '0';
+                    ffEl.style.transform = 'translateY(10px)';
+
+                    triggerOverlay('checkOutOverlay', 'confetti-out');
+
+                    // Animate the fun fact in smoothly
+                    setTimeout(() => {
+                        ffEl.style.opacity = '1';
+                        ffEl.style.transform = 'translateY(0)';
+                    }, 50);
+                }
                 wasInside = isInside;
             });
 
             const qrData = `${roll}|${firebaseKey}`;
-            new QRCode(document.getElementById("qrcode"), {
-                text: qrData, width: 220, height: 220,
-                colorDark: "#000000", colorLight: "#ffffff"
+
+            // Generate Apple Watch style QR Code with circular dots and gradient
+            const qrCode = new QRCodeStyling({
+                width: 220,
+                height: 220,
+                data: qrData,
+                margin: 0,
+                qrOptions: { typeNumber: 0, mode: "Byte", errorCorrectionLevel: "H" },
+                imageOptions: { hideBackgroundDots: true, imageSize: 0.4, margin: 0 },
+                dotsOptions: {
+                    type: "dots", /* This makes the dots circular */
+                    gradient: {
+                        type: "linear",
+                        rotation: Math.PI / 4,
+                        colorStops: [{ offset: 0, color: "#9b51e0" }, { offset: 1, color: "#667eea" }]
+                    }
+                },
+                backgroundOptions: { color: "transparent" }, /* Transparent background for glow effect */
+                cornersSquareOptions: { type: "extra-rounded", color: "#8a57df" },
+                cornersDotOptions: { type: "dot", color: "#667eea" }
             });
+
+            qrCode.append(document.getElementById("qrcode"));
         }
 
         // ===== OVERLAY =====
