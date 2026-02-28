@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Rush Less - Admin Scanner</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap">
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            color: white;
+            background: linear-gradient(-45deg, #0a0e1a, #141e30, #1a1a3e, #0f2027);
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .scanner-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .scanner-header h2 {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmerText 3s ease infinite;
+            margin: 0 0 5px;
+        }
+
+        .scanner-header p {
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 300;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        @keyframes shimmerText {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 420px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Override the QR scanner styling */
+        #reader img {
+            border-radius: 10px;
+        }
+
+        #reader video {
+            border-radius: 10px;
+        }
+
+        #status {
+            margin-top: 30px;
+            font-size: 18px;
+            font-weight: 600;
+            padding: 16px 32px;
+            border-radius: 18px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(20px);
+            letter-spacing: 0.5px;
+        }
+
+        .waiting {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .success {
+            background: rgba(46, 204, 113, 0.12);
+            border: 1px solid rgba(46, 204, 113, 0.35);
+            color: #2ecc71;
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.2);
+            transform: scale(1.02);
+        }
+
+        .warning {
+            background: rgba(230, 126, 34, 0.12);
+            border: 1px solid rgba(230, 126, 34, 0.35);
+            color: #e67e22;
+            box-shadow: 0 8px 25px rgba(230, 126, 34, 0.2);
+            transform: scale(1.02);
+        }
+
+        .scan-count {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px 24px;
+            text-align: center;
+            backdrop-filter: blur(15px);
+            min-width: 100px;
+        }
+
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: 800;
+            display: block;
+        }
+
+        .stat-card .label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 400;
+        }
+
+        .stat-card.in-color .number {
+            color: #2ecc71;
+        }
+
+        .stat-card.out-color .number {
+            color: #e67e22;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="scanner-header">
+        <h2>Admin Scanner</h2>
+        <p>Scan student QR codes</p>
+    </div>
+
+    <div id="reader"></div>
+
+    <div id="status" class="waiting">⏳ Waiting for scan...</div>
+
+    <div class="scan-count">
+        <div class="stat-card in-color">
+            <span class="number" id="scanInCount">0</span>
+            <span class="label">Checked In</span>
+        </div>
+        <div class="stat-card out-color">
+            <span class="number" id="scanOutCount">0</span>
+            <span class="label">Checked Out</span>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyADlmaitwR3abB6yi6s0EYQLqXMC2XbQcg",
+            authDomain: "insomniac-hackathon.firebaseapp.com",
+            databaseURL: "https://insomniac-hackathon-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "insomniac-hackathon",
+            storageBucket: "insomniac-hackathon.firebasestorage.app",
+            messagingSenderId: "36138743522",
+            appId: "1:36138743522:web:2378875e9b654ea86850bb",
+            measurementId: "G-N33N94ZTNQ"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let isProcessing = false;
+        let totalIn = 0;
+        let totalOut = 0;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            const parts = decodedText.split('|');
+            if (parts.length !== 2) {
+                updateStatus("❌ Invalid QR Code!", "warning");
+                setTimeout(() => { isProcessing = false; }, 2000);
+                return;
+            }
+
+            const rollNumber = parts[0];
+            const location = parts[1];
+
+            const userStatusRef = db.ref(`active_users/${location}/${rollNumber}`);
+            const countRef = db.ref(`counts/${location}`);
+
+            userStatusRef.once('value').then((snapshot) => {
+                const isInside = snapshot.val();
+
+                if (isInside) {
+                    userStatusRef.remove();
+                    countRef.set(firebase.database.ServerValue.increment(-1));
+                    updateStatus(`👋 Checked OUT: ${rollNumber}`, "warning");
+                    totalOut++;
+                    document.getElementById('scanOutCount').innerText = totalOut;
+                } else {
+                    userStatusRef.set(true);
+                    countRef.set(firebase.database.ServerValue.increment(1));
+                    updateStatus(`✅ Checked IN: ${rollNumber}`, "success");
+                    totalIn++;
+                    document.getElementById('scanInCount').innerText = totalIn;
+                }
+
+                setTimeout(() => {
+                    isProcessing = false;
+                    document.getElementById('status').innerText = "⏳ Waiting for scan...";
+                    document.getElementById('status').className = "waiting";
+                }, 2500);
+            });
+        }
+
+        function updateStatus(message, className) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = message;
+            statusDiv.className = className;
+        }
+
+        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
+</body>
+
+</html>

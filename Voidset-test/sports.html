@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Sports Complex - RushLess</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style1.css">
+    <style>
+        .facility-icon {
+            font-size: 28px;
+            margin-right: 10px;
+        }
+
+        @keyframes cardEntrance {
+            0% {
+                opacity: 0;
+                transform: translateY(25px) scale(0.95);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .card-animated {
+            animation: cardEntrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="main">
+
+        <div class="topbar">
+            <button onclick="goBack()">← Back</button>
+            <h1>Sports Complex</h1>
+        </div>
+
+        <div class="cards">
+
+            <div class="floor-card card-animated" style="animation-delay:0s" onclick="goTo('badminton.html')">
+                <div class="floor-info">
+                    <h2><span class="facility-icon">🏸</span>Badminton</h2>
+                    <p>8 courts — tap to view →</p>
+                </div>
+                <div id="badminton-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.08s" onclick="goTo('tabletennis.html')">
+                <div class="floor-info">
+                    <h2><span class="facility-icon">🏓</span>Table Tennis</h2>
+                    <p>4 courts — tap to view →</p>
+                </div>
+                <div id="tabletennis-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.16s" onclick="goTo('squash.html')">
+                <div class="floor-info">
+                    <h2><span class="facility-icon">🎾</span>Squash</h2>
+                    <p>2 courts — tap to view →</p>
+                </div>
+                <div id="squash-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.24s" onclick="selectSport('gym')">
+                <div class="floor-info">
+                    <h2><span class="facility-icon">🏋️</span>Gym</h2>
+                    <p><span id="gym-count">18</span> people</p>
+                </div>
+                <div id="gym-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.32s" onclick="selectSport('kabbadi')">
+                <div class="floor-info">
+                    <h2><span class="facility-icon">🤼</span>Kabbadi</h2>
+                    <p><span id="kabbadi-count">10</span> players</p>
+                </div>
+                <div id="kabbadi-status" class="status"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+    <script src="script2.js"></script>
+    <script>
+        updateSportsRush();
+    </script>
+
+</body>
+
+</html>

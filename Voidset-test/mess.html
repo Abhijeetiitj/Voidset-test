@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mess - RushLess</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style1.css">
+</head>
+<body>
+
+<div class="main">
+
+    <div class="topbar">
+        <button onclick="goBack()">← Back</button>
+        <h1>Mess Floors</h1>
+    </div>
+
+    <div class="cards">
+
+        <div class="floor-card" onclick="selectFloor('floor0')">
+            <div class="floor-info">
+                <h2>Floor 0</h2>
+                <p><span id="floor0-count">12</span> people</p>
+            </div>
+            <div id="floor0-status" class="status"></div>
+        </div>
+
+        <div class="floor-card" onclick="selectFloor('floor1')">
+            <div class="floor-info">
+                <h2>Floor 1</h2>
+                <p><span id="floor1-count">28</span> people</p>
+            </div>
+            <div id="floor1-status" class="status"></div>
+        </div>
+
+        <div class="floor-card" onclick="selectFloor('floor2')">
+            <div class="floor-info">
+                <h2>Floor 2</h2>
+                <p><span id="floor2-count">45</span> people</p>
+            </div>
+            <div id="floor2-status" class="status"></div>
+        </div>
+
+    
+
+    </div>
+
+</div>
+
+<script src="script1.js"></script>
+<script>
+    updateRushStatus();
+</script>
+
+</body>
+</html>
