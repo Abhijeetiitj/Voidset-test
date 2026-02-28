@@ -1,6 +1,6 @@
 # 🎟️ RushLess - Smart Crowd Management
 
-**Live Demo:** [https://spectacular-salamander-a6f0b0.netlify.app/](https://spectacular-salamander-a6f0b0.netlify.app/)
+**Live Demo:** [https://splendorous-custard-b920dc.netlify.app/](https://splendorous-custard-b920dc.netlify.app/)
 
 RushLess is a premium, real-time crowd management web application designed for campus facilities (like the Mess, Sports Complex, and Library). It replaces traditional ID card scanning or manual logbooks with secure Google Authentication, dynamic Apple Watch-style QR codes, and a blazing-fast Firebase backend.
 

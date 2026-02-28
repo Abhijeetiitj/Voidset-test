@@ -107,7 +107,6 @@ body {
     justify-content: space-between;
     align-items: center;
     position: relative;
-    overflow: hidden;
 }
 
 .floor-card::before {
@@ -120,6 +119,7 @@ body {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.06) 0%, transparent 60%);
     opacity: 0;
     transition: opacity 0.4s;
+    border-radius: 20px;
 }
 
 .floor-card:hover::before {

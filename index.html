@@ -837,6 +837,7 @@
 
         let currentLevel = facilityTree;
         let breadcrumbHistory = [];
+        let previousCounts = {}; // Track previous counts for trend arrows
 
         // ===== GOOGLE SIGN-IN =====
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -939,7 +940,17 @@
                 if (window.activePassesListenerRef) db.ref(window.activePassesListenerRef).off();
             }
 
+            // Optional: Fetch global average mess duration if we are rendering Mess floors
+            let messAvgMins = 15; // default fallback
+            if (title === 'Mess') {
+                db.ref('stats/rolling_avg_duration/Mess').once('value').then(snap => {
+                    if (snap.val()) messAvgMins = snap.val();
+                });
+            }
+
             let delay = 0;
+            const facilityKeys = [];
+            // First pass to collect keys and set up the DOM
             for (const [key, value] of Object.entries(treeNode)) {
                 const icon = facilityIcons[key] || '📌';
                 if (typeof value === 'object') {
@@ -952,23 +963,92 @@
                     `;
                 } else {
                     const firebaseKey = value;
+                    facilityKeys.push(firebaseKey);
                     container.innerHTML += `
-                        <div class="floor-card card-animated" style="animation-delay: ${delay}s" onclick="generateQR('${key}', '${firebaseKey}')">
+                        <div class="floor-card card-animated" id="card-${firebaseKey}" style="animation-delay: ${delay}s; position:relative;" onclick="generateQR('${key}', '${firebaseKey}')">
+                            <div id="badge-${firebaseKey}" style="position:absolute; top:-12px; right:20px; background:linear-gradient(45deg, #11998e, #38ef7d); padding:4px 10px; border-radius:12px; font-size:11px; font-weight:700; display:none; box-shadow:0 6px 15px rgba(56,239,125,0.4); text-transform:uppercase; letter-spacing:1px; z-index:10;">🌟 Least Crowded</div>
                             <div class="floor-info">
                                 <h2><span style="margin-right:8px;">${icon}</span>${key}</h2>
-                                <p><span id="count-${firebaseKey}">0</span> people inside</p>
+                                <p>
+                                    <span id="count-${firebaseKey}" style="font-weight:600; font-size:16px;">0</span> people inside
+                                    <span id="trend-${firebaseKey}" style="margin-left:5px; font-weight:bold; transition:all 0.3s; opacity:0;"></span>
+                                </p>
+                                <p id="wait-${firebaseKey}" style="font-size:12px; color:rgba(255,255,255,0.4); margin-top:4px; display:none;"></p>
                             </div>
                             <div class="status"></div>
                         </div>
                     `;
-
-                    db.ref(`counts/${firebaseKey}`).on('value', (snapshot) => {
-                        const count = snapshot.val() || 0;
-                        const el = document.getElementById(`count-${firebaseKey}`);
-                        if (el) el.innerText = count;
-                    });
                 }
                 delay += 0.08;
+            }
+
+            // Second pass: setup listeners and find minimums
+            if (facilityKeys.length > 0) {
+                // Listen to all counts concurrently
+                db.ref('counts').on('value', (snapshot) => {
+                    const allCounts = snapshot.val() || {};
+                    let minCount = Infinity;
+
+                    // Update UI for each and find min
+                    facilityKeys.forEach(fbKey => {
+                        const currentCount = allCounts[fbKey] || 0;
+                        const prevCount = previousCounts[fbKey];
+
+                        // Update text
+                        const el = document.getElementById(`count-${fbKey}`);
+                        if (el) el.innerText = currentCount;
+
+                        // Update Trend Arrow
+                        const trendEl = document.getElementById(`trend-${fbKey}`);
+                        if (trendEl && prevCount !== undefined) {
+                            if (currentCount > prevCount) {
+                                trendEl.innerText = '↑';
+                                trendEl.style.color = '#ff6b6b';
+                                trendEl.style.opacity = '1';
+                            } else if (currentCount < prevCount) {
+                                trendEl.innerText = '↓';
+                                trendEl.style.color = '#38ef7d';
+                                trendEl.style.opacity = '1';
+                            }
+
+                            // Fade arrow out after 10s
+                            setTimeout(() => { if (trendEl) trendEl.style.opacity = '0'; }, 10000);
+                        }
+                        previousCounts[fbKey] = currentCount;
+
+                        // Calculate Mess Wait Time
+                        if (title === 'Mess') {
+                            const waitEl = document.getElementById(`wait-${fbKey}`);
+                            if (waitEl) {
+                                // Simple heuristic: (Current Count / 15 people leaving per chunk) * avg stay
+                                const estWait = Math.max(0, Math.round((currentCount / 15) * (messAvgMins / 3)));
+                                waitEl.innerText = `⏳ Est. Wait: ~${estWait} mins`;
+                                waitEl.style.display = 'block';
+                            }
+                        }
+
+                        // Track minimum for badge
+                        if (currentCount < minCount) minCount = currentCount;
+                    });
+
+                    // Update Lowest Crowded Badge (only if there is clearly a minimum and more than 1 option)
+                    if (facilityKeys.length > 1 && minCount !== Infinity) {
+                        facilityKeys.forEach(fbKey => {
+                            const badge = document.getElementById(`badge-${fbKey}`);
+                            const card = document.getElementById(`card-${fbKey}`);
+                            if (badge && card) {
+                                const count = allCounts[fbKey] || 0;
+                                if (count === minCount) {
+                                    badge.style.display = 'block';
+                                    card.style.border = '1px solid rgba(56,239,125,0.4)';
+                                } else {
+                                    badge.style.display = 'none';
+                                    card.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                                }
+                            }
+                        });
+                    }
+                });
             }
         }
 

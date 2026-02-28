@@ -246,6 +246,17 @@
                     if (typeof val === 'number') {
                         const mins = Math.max(1, Math.floor((Date.now() - val) / 60000));
                         durationFact = ` (${mins} min session!)`;
+
+                        // If it's a Mess facility, update the rolling average for Wait Time estimation
+                        if (location.startsWith('Mess_')) {
+                            const avgRef = db.ref('stats/rolling_avg_duration/Mess');
+                            avgRef.once('value').then(avgSnap => {
+                                const currentAvg = avgSnap.val() || 20; // default 20 mins
+                                // Simple moving average (weights recent visits slightly more)
+                                const newAvg = Math.round((currentAvg * 0.7) + (mins * 0.3));
+                                avgRef.set(newAvg);
+                            });
+                        }
                     }
 
                     updateStatus(`👋 Checked OUT: ${rollNumber}${durationFact}`, "warning");
