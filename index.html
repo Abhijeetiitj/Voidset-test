@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>RushLess - Smart Crowd Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="stlye.css">
+    <link rel="stylesheet" href="style1.css">
+    <link rel="stylesheet" href="style3.css">
+    <link rel="stylesheet" href="styleqr.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        /* ===== SCREEN SWITCHING — handled via JS inline styles ===== */
+
+        /* ===== FLOATING PARTICLES CANVAS ===== */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== PROFILE SCREEN ===== */
+        #screen-profile {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: 40px 20px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #screen-profile .header {
+            margin-bottom: 10px;
+        }
+
+        .logo-text {
+            font-size: 56px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmerText 3s ease infinite;
+        }
+
+        @keyframes shimmerText {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .tagline {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        #roll-setup {
+            text-align: center;
+            padding: 40px 20px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            outline: none;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 1px;
+            text-transform: none;
+        }
+
+        .input-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3), inset 0 0 20px rgba(102, 126, 234, 0.05);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px 32px;
+            font-size: 17px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-google {
+            width: 100%;
+            padding: 16px 32px;
+            font-size: 17px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+        .btn-google:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+            gap: 15px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+        }
+
+        .divider span {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+        .btn-admin {
+            width: 100%;
+            padding: 14px 24px;
+            font-size: 15px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            color: #2ecc71;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-admin:hover {
+            background: rgba(46, 204, 113, 0.2);
+            border-color: rgba(46, 204, 113, 0.5);
+            box-shadow: 0 5px 20px rgba(46, 204, 113, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* ===== CHANGE ROLL BUTTON ===== */
+        .change-roll {
+            display: block;
+            margin: 25px auto;
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            transition: color 0.3s;
+            letter-spacing: 0.5px;
+        }
+
+        .change-roll:hover {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* ===== NAV ADMIN ===== */
+        .admin-link-container {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+        }
+
+        /* ===== QR SCREEN OVERRIDES ===== */
+        #screen-qr {
+            position: relative;
+            z-index: 1;
+        }
+
+        .qr-box {
+            display: flex;
+            justify-content: center;
+            margin: 25px 0;
+            padding: 22px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .qr-box:hover {
+            transform: scale(1.03);
+        }
+
+        .live-count-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 30px;
+            margin-top: 8px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.5);
+            }
+        }
+
+        .btn-done {
+            padding: 14px 28px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.06);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-done:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ===== FACILITY ICONS ===== */
+        .facility-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* ===== SUCCESS OVERLAY ===== */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .success-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .overlay-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(20px);
+            z-index: 0;
+        }
+
+        .overlay-bg.green-bg {
+            background: radial-gradient(circle at center, rgba(46, 204, 113, 0.25), rgba(0, 0, 0, 0.9));
+        }
+
+        .overlay-bg.orange-bg {
+            background: radial-gradient(circle at center, rgba(230, 126, 34, 0.25), rgba(0, 0, 0, 0.9));
+        }
+
+        .overlay-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .success-icon-ring {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 70px;
+            margin: 0 auto 25px;
+            transform: scale(0);
+            position: relative;
+        }
+
+        .success-icon-ring.green-ring {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            box-shadow: 0 0 40px rgba(46, 204, 113, 0.5), 0 0 80px rgba(46, 204, 113, 0.2);
+        }
+
+        .success-icon-ring.orange-ring {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            box-shadow: 0 0 40px rgba(230, 126, 34, 0.5), 0 0 80px rgba(230, 126, 34, 0.2);
+        }
+
+        .success-icon-ring::after {
+            content: '';
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            animation: ringPulse 2s ease infinite;
+        }
+
+        .success-overlay.active .success-icon-ring {
+            animation: bounceIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .success-title {
+            font-size: 36px;
+            font-weight: 800;
+            color: white;
+            opacity: 0;
+            transform: translateY(30px);
+            letter-spacing: 1px;
+        }
+
+        .success-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            margin-top: 10px;
+        }
+
+        .success-overlay.active .success-title {
+            animation: slideUpFade 0.5s ease 0.35s forwards;
+        }
+
+        .success-overlay.active .success-subtitle {
+            animation: slideUpFade 0.5s ease 0.55s forwards;
+        }
+
+        /* Confetti particles inside overlay */
+        .confetti-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            opacity: 0;
+        }
+
+        .success-overlay.active .confetti {
+            animation: confettiFall 3s ease forwards;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0);
+            }
+
+            50% {
+                transform: scale(1.15);
+            }
+
+            70% {
+                transform: scale(0.95);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes slideUpFade {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes ringPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.15);
+                opacity: 0;
+            }
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* ===== STAGGERED CARD ENTRANCE ===== */
+        @keyframes cardEntrance {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .card-animated {
+            animation: cardEntrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+        }
+
+        /* ===== NAV SCREEN ===== */
+        #screen-nav {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Floating particles background -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- ===== PROFILE SCREEN ===== -->
+    <div id="screen-profile" class="screen" style="display:none;">
+        <div class="header" style="text-align:center;">
+            <h1 class="logo-text">RushLess</h1>
+            <p class="tagline">Smart Crowd Management</p>
+        </div>
+        <div id="roll-setup">
+            <button class="btn-google" onclick="signInWithGoogle()">
+                <svg viewBox="0 0 24 24" width="22" height="22" style="margin-right:10px;">
+                    <path fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+                    <path fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                Sign in with Google
+            </button>
+            <p id="auth-error"
+                style="color:#ff6b6b; margin-bottom:15px; font-size:14px; display:none; text-align:center; padding:10px; background:rgba(255,107,107,0.1); border-radius:8px; border:1px solid rgba(255,107,107,0.3);">
+            </p>
+            <p style="color:rgba(255,255,255,0.4); font-size:14px; margin-bottom:0px; text-align:center;">Only
+                @iitj.ac.in emails accepted</p>
+
+            <div class="divider"><span>or</span></div>
+
+            <button class="btn-admin" onclick="window.location.href='scanner.html'">📸 Open Scanner Mode</button>
+        </div>
+    </div>
+
+    <!-- ===== NAV SCREEN ===== -->
+    <div id="screen-nav" class="screen main" style="display:none;">
+        <div class="topbar" id="nav-topbar" style="display: none;">
+            <button onclick="goBackUp()">← Back</button>
+            <h1 id="nav-title">RushLess</h1>
+        </div>
+        <div class="header" id="nav-header" style="text-align:center;">
+            <h1 class="logo-text" style="font-size:42px;">RushLess</h1>
+            <p id="nav-subtitle" class="tagline" style="margin-bottom:10px;">Select Facility</p>
+            <div id="user-greeting"
+                style="margin-bottom:30px; padding:8px 16px; background:rgba(255,255,255,0.05); border-radius:30px; display:inline-flex; align-items:center; gap:10px; border:1px solid rgba(255,255,255,0.1); backdrop-filter:blur(5px);">
+                <img id="user-avatar" src="" alt="Avatar"
+                    style="width:24px; height:24px; border-radius:50%; display:none;">
+                <span id="user-name" style="font-size:14px; color:rgba(255,255,255,0.8); font-weight:500;"></span>
+            </div>
+        </div>
+
+        <div class="cards" id="nav-container"></div>
+
+        <button class="change-roll" onclick="signOutUser()">↻ Sign Out</button>
+
+        <div id="nav-admin-link" class="admin-link-container" style="display: none;">
+            <button class="btn-admin" style="max-width:300px; margin:0 auto;"
+                onclick="window.location.href='scanner.html'">📸 Open Scanner Mode</button>
+        </div>
+    </div>
+
+    <!-- ===== QR SCREEN ===== -->
+    <div id="screen-qr" class="screen container" style="display:none;">
+        <h1 class="logo-text" style="font-size:36px;">RushLess</h1>
+        <p class="subtitle">Show this QR at the gate scanner</p>
+
+        <div class="info-box">
+            <p style="font-size:13px; text-transform:uppercase; letter-spacing:2px; margin-bottom:5px;">📍 Facility
+                Location</p>
+            <h2 id="displayLocationName" style="font-weight:700;">Loading...</h2>
+            <div class="live-count-badge">
+                <span class="pulse-dot"></span>
+                <span style="font-weight:600; font-size:15px;"><span id="liveCountDisplay">...</span> people
+                    inside</span>
+            </div>
+        </div>
+
+        <div id="qrcode" class="qr-box"></div>
+        <p class="note">🔒 QR valid for this session only</p>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn-done" onclick="goToHome()">✓ Done / Back to Home</button>
+        </div>
+    </div>
+
+    <!-- ===== SUCCESS OVERLAYS ===== -->
+    <div id="checkInOverlay" class="success-overlay">
+        <div class="overlay-bg green-bg"></div>
+        <div class="confetti-container" id="confetti-in"></div>
+        <div class="overlay-content">
+            <div class="success-icon-ring green-ring">✓</div>
+            <div class="success-title">Checked In!</div>
+            <div class="success-subtitle">Welcome — enjoy your facility</div>
+        </div>
+    </div>
+
+    <div id="checkOutOverlay" class="success-overlay">
+        <div class="overlay-bg orange-bg"></div>
+        <div class="confetti-container" id="confetti-out"></div>
+        <div class="overlay-content">
+            <div class="success-icon-ring orange-ring">👋</div>
+            <div class="success-title">Checked Out!</div>
+            <div class="success-subtitle">See you next time</div>
+        </div>
+    </div>
+
+    <script>
+        // ===== FLOATING PARTICLES =====
+        (function () {
+            const canvas = document.getElementById('particles-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const PARTICLE_COUNT = 50;
+            const colors = ['rgba(102,126,234,0.3)', 'rgba(118,75,162,0.25)', 'rgba(240,147,251,0.2)', 'rgba(46,204,113,0.15)'];
+
+            function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor() { this.reset(); }
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 4 + 1;
+                    this.speedX = (Math.random() - 0.5) * 0.5;
+                    this.speedY = (Math.random() - 0.5) * 0.5;
+                    this.color = colors[Math.floor(Math.random() * colors.length)];
+                    this.opacity = Math.random() * 0.5 + 0.1;
+                }
+                update() {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.globalAlpha = this.opacity;
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+            function drawLines() {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 120) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(102,126,234,${0.08 * (1 - dist / 120)})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => { p.update(); p.draw(); });
+                drawLines();
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+
+        // ===== CONFETTI GENERATOR =====
+        function spawnConfetti(containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#2ecc71', '#e67e22', '#3498db', '#e74c3c', '#f1c40f'];
+            for (let i = 0; i < 60; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + '%';
+                c.style.top = '-10px';
+                c.style.background = colors[Math.floor(Math.random() * colors.length)];
+                c.style.animationDelay = (Math.random() * 1) + 's';
+                c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                c.style.width = (Math.random() * 8 + 4) + 'px';
+                c.style.height = (Math.random() * 8 + 4) + 'px';
+                c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                container.appendChild(c);
+            }
+        }
+
+        // ===== FACILITY ICONS =====
+        const facilityIcons = {
+            'Mess': '🍽️', 'Sports Complex': '🏟️', 'Library': '📚',
+            'Badminton': '🏸', 'Table Tennis': '🏓', 'Squash': '🎾',
+            'Gym': '🏋️', 'Kabbadi': '🤼',
+            'Floor 0': '0️⃣', 'Floor 1': '1️⃣', 'Floor 2': '2️⃣',
+            'Central Library': '📖',
+            'Court 1': '①', 'Court 2': '②', 'Court 3': '③', 'Court 4': '④',
+            'Court 5': '⑤', 'Court 6': '⑥', 'Court 7': '⑦', 'Court 8': '⑧'
+        };
+
+        // ===== FIREBASE =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyADlmaitwR3abB6yi6s0EYQLqXMC2XbQcg",
+            authDomain: "insomniac-hackathon.firebaseapp.com",
+            databaseURL: "https://insomniac-hackathon-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "insomniac-hackathon",
+            storageBucket: "insomniac-hackathon.firebasestorage.app",
+            messagingSenderId: "36138743522",
+            appId: "1:36138743522:web:2378875e9b654ea86850bb",
+            measurementId: "G-N33N94ZTNQ"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let currentListenerRef = null;
+
+        // FACILITY TREE
+        const facilityTree = {
+            "Mess": {
+                "Floor 0": "Mess_Floor_0",
+                "Floor 1": "Mess_Floor_1",
+                "Floor 2": "Mess_Floor_2"
+            },
+            "Sports Complex": {
+                "Badminton": {
+                    "Court 1": "Sports_Badminton_1",
+                    "Court 2": "Sports_Badminton_2",
+                    "Court 3": "Sports_Badminton_3",
+                    "Court 4": "Sports_Badminton_4",
+                    "Court 5": "Sports_Badminton_5",
+                    "Court 6": "Sports_Badminton_6",
+                    "Court 7": "Sports_Badminton_7",
+                    "Court 8": "Sports_Badminton_8"
+                },
+                "Table Tennis": {
+                    "Court 1": "Sports_TT_1",
+                    "Court 2": "Sports_TT_2",
+                    "Court 3": "Sports_TT_3",
+                    "Court 4": "Sports_TT_4"
+                },
+                "Squash": {
+                    "Court 1": "Sports_Squash_1",
+                    "Court 2": "Sports_Squash_2"
+                },
+                "Gym": "Sports_Gym",
+                "Kabbadi": "Sports_Kabbadi"
+            },
+            "Library": {
+                "Central Library": "Library_Central"
+            }
+        };
+
+        let currentLevel = facilityTree;
+        let breadcrumbHistory = [];
+
+        // ===== GOOGLE SIGN-IN =====
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ hd: 'iitj.ac.in' });
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user && user.email && user.email.endsWith('@iitj.ac.in')) {
+                // Determine roll number from email (everything before @)
+                const roll = user.email.split('@')[0].toUpperCase();
+                localStorage.setItem('rushless_roll', roll);
+
+                // Update UI greeting
+                const av = document.getElementById('user-avatar');
+                const nm = document.getElementById('user-name');
+                if (user.photoURL) { av.src = user.photoURL; av.style.display = 'inline-block'; }
+                nm.innerText = user.displayName || roll;
+
+                showScreen('screen-nav');
+                renderNav(facilityTree, 'Home');
+            } else {
+                showScreen('screen-profile');
+            }
+        });
+
+        function signInWithGoogle() {
+            const err = document.getElementById('auth-error');
+            err.style.display = 'none';
+
+            firebase.auth().signInWithPopup(provider).then((res) => {
+                if (!res.user.email.endsWith('@iitj.ac.in')) {
+                    firebase.auth().signOut();
+                    err.innerText = "Access denied: Only @iitj.ac.in emails are allowed.";
+                    err.style.display = 'block';
+                }
+            }).catch((e) => {
+                if (e.code !== 'auth/popup-closed-by-user') {
+                    err.innerText = "Sign-in failed: " + e.message;
+                    err.style.display = 'block';
+                }
+            });
+        }
+
+        function signOutUser() {
+            firebase.auth().signOut().then(() => {
+                localStorage.removeItem('rushless_roll');
+                showScreen('screen-profile');
+            });
+        }
+
+        function showScreen(screenId) {
+            // Hide ALL screens first with inline display:none
+            document.querySelectorAll('.screen').forEach(s => {
+                s.style.display = 'none';
+            });
+            // Show the target screen
+            const target = document.getElementById(screenId);
+            if (screenId === 'screen-profile') {
+                target.style.display = 'flex';
+            } else {
+                target.style.display = 'block';
+            }
+        }
+
+        // ===== NAVIGATION =====
+        function renderNav(treeNode, title) {
+            const container = document.getElementById('nav-container');
+            container.innerHTML = "";
+            db.ref('counts').off();
+
+            if (title === 'Home') {
+                document.getElementById('nav-topbar').style.display = 'none';
+                document.getElementById('nav-header').style.display = 'block';
+                document.getElementById('nav-subtitle').innerText = "Select Facility";
+                document.getElementById('nav-admin-link').style.display = 'block';
+            } else {
+                document.getElementById('nav-topbar').style.display = 'flex';
+                document.getElementById('nav-header').style.display = 'none';
+                document.getElementById('nav-title').innerText = title;
+                document.getElementById('nav-admin-link').style.display = 'none';
+            }
+
+            let delay = 0;
+            for (const [key, value] of Object.entries(treeNode)) {
+                const icon = facilityIcons[key] || '📌';
+                if (typeof value === 'object') {
+                    container.innerHTML += `
+                        <div class="card card-animated" style="animation-delay: ${delay}s" onclick="diveDeeper('${key}')">
+                            <span class="facility-icon">${icon}</span>
+                            <h2>${key}</h2>
+                            <p>Tap to view facilities →</p>
+                        </div>
+                    `;
+                } else {
+                    const firebaseKey = value;
+                    container.innerHTML += `
+                        <div class="floor-card card-animated" style="animation-delay: ${delay}s" onclick="generateQR('${key}', '${firebaseKey}')">
+                            <div class="floor-info">
+                                <h2><span style="margin-right:8px;">${icon}</span>${key}</h2>
+                                <p><span id="count-${firebaseKey}">0</span> people inside</p>
+                            </div>
+                            <div class="status"></div>
+                        </div>
+                    `;
+
+                    db.ref(`counts/${firebaseKey}`).on('value', (snapshot) => {
+                        const count = snapshot.val() || 0;
+                        const el = document.getElementById(`count-${firebaseKey}`);
+                        if (el) el.innerText = count;
+                    });
+                }
+                delay += 0.08;
+            }
+        }
+
+        function diveDeeper(key) {
+            // Check if we're at Home by seeing if the topbar is hidden
+            const isHome = document.getElementById('nav-topbar').style.display === 'none';
+            const currentTitle = isHome ? 'Home' : document.getElementById('nav-title').innerText;
+            breadcrumbHistory.push({ node: currentLevel, title: currentTitle });
+            currentLevel = currentLevel[key];
+            renderNav(currentLevel, key);
+        }
+
+        function goBackUp() {
+            if (breadcrumbHistory.length > 0) {
+                const prev = breadcrumbHistory.pop();
+                currentLevel = prev.node;
+                renderNav(currentLevel, prev.title);
+            }
+        }
+
+        function goToHome() {
+            if (currentListenerRef) db.ref(currentListenerRef).off();
+            if (window.userStatusListenerRef) db.ref(window.userStatusListenerRef).off();
+            breadcrumbHistory = [];
+            currentLevel = facilityTree;
+            showScreen('screen-nav');
+            renderNav(facilityTree, 'Home');
+        }
+
+        // ===== QR =====
+        function generateQR(displayName, firebaseKey) {
+            const roll = localStorage.getItem('rushless_roll');
+            showScreen('screen-qr');
+            document.getElementById('displayLocationName').innerText = displayName;
+            document.getElementById("qrcode").innerHTML = "";
+
+            if (currentListenerRef) db.ref(currentListenerRef).off();
+            if (window.userStatusListenerRef) db.ref(window.userStatusListenerRef).off();
+
+            currentListenerRef = `counts/${firebaseKey}`;
+            db.ref(currentListenerRef).on('value', (snapshot) => {
+                document.getElementById('liveCountDisplay').innerText = (snapshot.val() || 0);
+            });
+
+            // Listen for scan events
+            window.userStatusListenerRef = `active_users/${firebaseKey}/${roll}`;
+            let initialLoad = true;
+            let wasInside = false;
+
+            db.ref(window.userStatusListenerRef).on('value', (snapshot) => {
+                const isInside = snapshot.val() === true;
+                if (initialLoad) { initialLoad = false; wasInside = isInside; return; }
+                if (!wasInside && isInside) triggerOverlay('checkInOverlay', 'confetti-in');
+                else if (wasInside && !isInside) triggerOverlay('checkOutOverlay', 'confetti-out');
+                wasInside = isInside;
+            });
+
+            const qrData = `${roll}|${firebaseKey}`;
+            new QRCode(document.getElementById("qrcode"), {
+                text: qrData, width: 220, height: 220,
+                colorDark: "#000000", colorLight: "#ffffff"
+            });
+        }
+
+        // ===== OVERLAY =====
+        function triggerOverlay(overlayId, confettiId) {
+            const overlay = document.getElementById(overlayId);
+            spawnConfetti(confettiId);
+            overlay.classList.add('active');
+            setTimeout(() => {
+                overlay.classList.remove('active');
+                goToHome();
+            }, 3500);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Library - RushLess</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style3.css">
+</head>
+<body>
+
+<div class="main">
+
+    <div class="topbar">
+        <button onclick="goBack()">← Back</button>
+        <h1>Library</h1>
+    </div>
+
+    <div class="cards">
+
+        <div class="floor-card" onclick="selectLibrary()">
+            <div class="floor-info">
+                <h2>Central Library</h2>
+                <p><span id="library-count">52</span> students inside</p>
+            </div>
+            <div id="library-status" class="status"></div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="script3.js"></script>
+<script>
+    updateLibraryRush();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rush Less - Student App</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .app-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Screen Management */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        h3 {
+            color: #555;
+            font-weight: normal;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            text-transform: uppercase;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+            font-size: 16px;
+            font-weight: bold;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button.secondary {
+            background: #6c757d;
+        }
+
+        button.text-btn {
+            background: none;
+            color: #007bff;
+            text-decoration: underline;
+            padding: 5px;
+            font-weight: normal;
+            margin-top: 15px;
+        }
+
+        /* Live Count Badge on Buttons */
+        .badge {
+            background: #fff;
+            color: #007bff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        #qrcode {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .large-count {
+            font-size: 32px;
+            font-weight: bold;
+            color: #28a745;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <div id="screen-profile" class="screen">
+            <h2>Welcome to Rush Less 🏃‍♂️</h2>
+            <p>Enter your Roll Number once. We'll remember it.</p>
+            <input type="text" id="rollInput" placeholder="e.g. B22CS014">
+            <button onclick="saveRollNumber()">Save & Continue</button>
+        </div>
+
+        <div id="screen-nav" class="screen">
+            <h2>Select Facility</h2>
+            <h3 id="nav-breadcrumb">Where are you heading?</h3>
+            <div id="nav-buttons"></div>
+            <button class="text-btn" id="backBtn" onclick="renderNav(facilityTree, 'Where are you heading?')"
+                style="display:none;">← Back to Start</button>
+            <button class="text-btn" onclick="clearRollNumber()">Change Roll Number</button>
+        </div>
+
+        <div id="screen-qr" class="screen">
+            <h2 id="qr-title">Your Pass</h2>
+            <p>Current Crowd Count:</p>
+            <div id="qr-live-count" class="large-count">Loading...</div>
+            <div id="qrcode"></div>
+            <button class="secondary" style="margin-top: 20px;" onclick="goToHome()">Done / Back Home</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. FIREBASE SETUP ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyADlmaitwR3abB6yi6s0EYQLqXMC2XbQcg",
+            authDomain: "insomniac-hackathon.firebaseapp.com",
+            databaseURL: "https://insomniac-hackathon-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "insomniac-hackathon",
+            storageBucket: "insomniac-hackathon.firebasestorage.app",
+            messagingSenderId: "36138743522",
+            appId: "1:36138743522:web:2378875e9b654ea86850bb",
+            measurementId: "G-N33N94ZTNQ"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let currentListenerRef = null; // Keeps track of active database listeners
+
+        // --- 2. FACILITY DATA TREE ---
+        // You can make this as deep as you want! 
+        // If the value is an object {}, it creates a new menu screen.
+        // If the value is a string, it acts as the final Firebase Database Key and generates the QR.
+        const facilityTree = {
+            "Mess": {
+                "Ground Floor": "Mess_Floor_G",
+                "First Floor": "Mess_Floor_1",
+                "Second Floor": "Mess_Floor_2"
+            },
+            "Akaash Complex": {
+                "Badminton": {
+                    "Court 1": "Akaash_Badminton_1",
+                    "Court 2": "Akaash_Badminton_2"
+                },
+                "Table Tennis": "Akaash_TT"
+            },
+            "Library": {
+                "Reading Room 1": "Lib_RR1",
+                "Reading Room 2": "Lib_RR2"
+            }
+        };
+
+        // --- 3. APP LOGIC & STATE ---
+        window.onload = () => {
+            const savedRoll = localStorage.getItem('rushless_roll');
+            if (savedRoll) {
+                showScreen('screen-nav');
+                renderNav(facilityTree, 'Where are you heading?');
+            } else {
+                showScreen('screen-profile');
+            }
+        };
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // --- Profile Functions ---
+        function saveRollNumber() {
+            const roll = document.getElementById('rollInput').value.trim().toUpperCase();
+            if (!roll) { alert("Please enter a valid Roll Number"); return; }
+            localStorage.setItem('rushless_roll', roll);
+            showScreen('screen-nav');
+            renderNav(facilityTree, 'Where are you heading?');
+        }
+
+        function clearRollNumber() {
+            localStorage.removeItem('rushless_roll');
+            document.getElementById('rollInput').value = "";
+            showScreen('screen-profile');
+        }
+
+        // --- Dynamic Navigation Functions ---
+        function renderNav(treeNode, breadcrumbText) {
+            const container = document.getElementById('nav-buttons');
+            const breadcrumb = document.getElementById('nav-breadcrumb');
+            const backBtn = document.getElementById('backBtn');
+
+            container.innerHTML = ""; // Clear old buttons
+            breadcrumb.innerText = breadcrumbText;
+
+            // Show/hide back button
+            backBtn.style.display = (treeNode === facilityTree) ? 'none' : 'inline-block';
+
+            // Remove previous Firebase listeners on buttons
+            db.ref('counts').off();
+
+            for (const [key, value] of Object.entries(treeNode)) {
+                const btn = document.createElement('button');
+
+                if (typeof value === 'object') {
+                    // It's a category (e.g., "Akaash Complex" -> opens next level)
+                    btn.innerHTML = `<span>${key}</span> <span>▶</span>`;
+                    btn.onclick = () => renderNav(value, key);
+                } else {
+                    // It's a leaf node (e.g., "Court 1" -> Shows live count and goes to QR)
+                    const firebaseKey = value;
+                    btn.innerHTML = `<span>${key}</span> <span class="badge" id="badge-${firebaseKey}">...</span>`;
+                    btn.onclick = () => generatePass(key, firebaseKey);
+
+                    // Attach live listener for this specific button
+                    db.ref(`counts/${firebaseKey}`).on('value', (snapshot) => {
+                        const count = snapshot.val() || 0;
+                        const badge = document.getElementById(`badge-${firebaseKey}`);
+                        if (badge) badge.innerText = count + " People";
+                    });
+                }
+                container.appendChild(btn);
+            }
+        }
+
+        // --- QR Generation Functions ---
+        function generatePass(displayName, firebaseKey) {
+            const roll = localStorage.getItem('rushless_roll');
+            showScreen('screen-qr');
+            document.getElementById('qr-title').innerText = displayName;
+
+            // Clear old QR and old listeners
+            document.getElementById("qrcode").innerHTML = "";
+            if (currentListenerRef) db.ref(currentListenerRef).off();
+
+            // Set up live count for the big display on the QR screen
+            currentListenerRef = `counts/${firebaseKey}`;
+            db.ref(currentListenerRef).on('value', (snapshot) => {
+                document.getElementById('qr-live-count').innerText = (snapshot.val() || 0);
+            });
+
+            // Format: B22CS014|Akaash_Badminton_1
+            const qrData = `${roll}|${firebaseKey}`;
+
+            new QRCode(document.getElementById("qrcode"), {
+                text: qrData,
+                width: 220,
+                height: 220,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function goToHome() {
+            if (currentListenerRef) db.ref(currentListenerRef).off(); // Stop listening to save data
+            showScreen('screen-nav');
+            renderNav(facilityTree, 'Where are you heading?');
+        }
+    </script>
+</body>
+
+</html>

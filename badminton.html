@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Badminton Courts - RushLess</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style1.css">
+    <style>
+        .court-number {
+            display: inline-flex;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            justify-content: center;
+            align-items: center;
+            font-size: 15px;
+            font-weight: 800;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        @keyframes cardEntrance {
+            0% {
+                opacity: 0;
+                transform: translateY(25px) scale(0.95);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .card-animated {
+            animation: cardEntrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="main">
+
+        <div class="topbar">
+            <button onclick="goBack()">← Back</button>
+            <h1>🏸 Badminton</h1>
+        </div>
+
+        <div class="cards">
+
+            <div class="floor-card card-animated" style="animation-delay:0s" onclick="selectSport('badminton_court_1')">
+                <div class="floor-info">
+                    <h2><span class="court-number">1</span>Court 1</h2>
+                    <p><span id="badminton_court_1-count">2</span> players</p>
+                </div>
+                <div id="badminton_court_1-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.06s"
+                onclick="selectSport('badminton_court_2')">
+                <div class="floor-info">
+                    <h2><span class="court-number">2</span>Court 2</h2>
+                    <p><span id="badminton_court_2-count">4</span> players</p>
+                </div>
+                <div id="badminton_court_2-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.12s"
+                onclick="selectSport('badminton_court_3')">
+                <div class="floor-info">
+                    <h2><span class="court-number">3</span>Court 3</h2>
+                    <p><span id="badminton_court_3-count">0</span> players</p>
+                </div>
+                <div id="badminton_court_3-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.18s"
+                onclick="selectSport('badminton_court_4')">
+                <div class="floor-info">
+                    <h2><span class="court-number">4</span>Court 4</h2>
+                    <p><span id="badminton_court_4-count">4</span> players</p>
+                </div>
+                <div id="badminton_court_4-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.24s"
+                onclick="selectSport('badminton_court_5')">
+                <div class="floor-info">
+                    <h2><span class="court-number">5</span>Court 5</h2>
+                    <p><span id="badminton_court_5-count">6</span> players</p>
+                </div>
+                <div id="badminton_court_5-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.3s"
+                onclick="selectSport('badminton_court_6')">
+                <div class="floor-info">
+                    <h2><span class="court-number">6</span>Court 6</h2>
+                    <p><span id="badminton_court_6-count">3</span> players</p>
+                </div>
+                <div id="badminton_court_6-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.36s"
+                onclick="selectSport('badminton_court_7')">
+                <div class="floor-info">
+                    <h2><span class="court-number">7</span>Court 7</h2>
+                    <p><span id="badminton_court_7-count">2</span> players</p>
+                </div>
+                <div id="badminton_court_7-status" class="status"></div>
+            </div>
+
+            <div class="floor-card card-animated" style="animation-delay:0.42s"
+                onclick="selectSport('badminton_court_8')">
+                <div class="floor-info">
+                    <h2><span class="court-number">8</span>Court 8</h2>
+                    <p><span id="badminton_court_8-count">0</span> players</p>
+                </div>
+                <div id="badminton_court_8-status" class="status"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+    <script src="script2.js"></script>
+    <script>
+        updateSportsRush();
+    </script>
+
+</body>
+
+</html>
